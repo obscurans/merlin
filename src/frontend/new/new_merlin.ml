@@ -89,7 +89,14 @@ let run = function
         File_id.with_cache @@ fun () ->
         let tr = (if Mconfig.(config.merlin.trace) then
                     Trace.start () else Trace.null) in
-        let source = Msource.make tr (Misc.string_of_file stdin) in
+        let source = Misc.string_of_file stdin in
+        let source = match Mconfig.(config.ocaml.pp) with
+          | None -> source
+          | Some { workdir; workval } ->
+            Pparse.apply_pp
+              ~workdir ~filename:Mconfig.(config.query.filename) ~source ~pp:workval
+        in
+        let source = Msource.make tr source in
         let pipeline = Mpipeline.make tr config source in
         let json =
           let class_, message =
